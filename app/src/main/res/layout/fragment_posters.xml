@@ -1,6 +1,19 @@
-<?xml version="1.0" encoding="utf-8"?>
-<android.support.v7.widget.GridLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
-
-</android.support.v7.widget.GridLayout>
+    android:layout_height="match_parent"
+    tools:context="com.example.android.sunshine.app.ForecastFragment">
+    <GridView
+        android:numColumns="2"
+        android:id="@+id/gridview_posters"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:verticalSpacing="10dp"
+        android:horizontalSpacing="10dp" />
+        <!--
+        android:columnWidth="90dp"
+        android:numColumns="auto_fit"
+        android:stretchMode="columnWidth"
+        android:gravity="center"
+        -->
+</FrameLayout>
