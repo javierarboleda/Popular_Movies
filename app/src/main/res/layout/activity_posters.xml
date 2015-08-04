@@ -1,8 +1,7 @@
-<fragment xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/fragment_posters"
-    android:name="com.javierarboleda.popularmovies.PostersFragment"
+    android:id="@+id/container_posters"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.javierarboleda.popularmovies.PostersFragment"
-    tools:layout="@android:layout/simple_gallery_item" />
+    tools:context="com.javierarboleda.popularmovies.PostersActivity"
+    tools:ignore="MergeRootFrame"  />

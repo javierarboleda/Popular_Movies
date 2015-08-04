@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- Layout for posters grid item containing poster and title/year information -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center">
+
+    <ImageView
+        android:id="@+id/grid_item_poster_image"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="left"
+        android:layout_marginLeft="6dp" >
+
+        <TextView
+            android:id="@+id/grid_item_poster_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Terminator: Genisys"
+            android:textColor="@color/abc_primary_text_material_dark"
+            android:gravity="left"
+            android:typeface="normal"
+            android:textSize="12sp"/>
+
+        <TextView
+            android:id="@+id/grid_item_poster_release_year"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="2015"
+            android:textColor="@color/abc_primary_text_material_dark"
+            android:typeface="normal"
+            android:textSize="12sp"/>
+
+    </LinearLayout>
+
+</LinearLayout>

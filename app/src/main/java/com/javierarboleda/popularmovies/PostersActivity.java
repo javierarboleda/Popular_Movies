@@ -12,6 +12,11 @@ public class PostersActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_posters);
+        if (savedInstanceState == null) {
+            getSupportFragmentManager().beginTransaction()
+                    .add(R.id.container_posters, new PostersFragment())
+                    .commit();
+        }
     }
 
 
