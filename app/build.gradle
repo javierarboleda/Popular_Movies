@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "com.javierarboleda.popularmovies"
-        minSdkVersion 9
+        minSdkVersion 14
         targetSdkVersion 22
         versionCode 1
         versionName "1.0"
@@ -21,11 +21,12 @@ android {
 
 repositories {
     mavenCentral()
+    maven { url 'https://dl.bintray.com/drummer-aidan/maven' }
 }
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.android.support:gridlayout-v7:22.2.1'
     compile 'com.android.support:appcompat-v7:22.2.1'
     compile 'com.squareup.picasso:picasso:2.5.2'
+    compile 'com.afollestad:material-cab:0.1.4'
 }

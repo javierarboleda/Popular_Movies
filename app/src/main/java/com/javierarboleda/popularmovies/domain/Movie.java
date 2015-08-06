@@ -1,5 +1,8 @@
 package com.javierarboleda.popularmovies.domain;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+
 /**
  * Created by hype on 8/3/15.
  */
@@ -56,5 +59,20 @@ public class Movie {
 
     public void setBackdropPath(String mBackdropPath) {
         this.mBackdropPath = mBackdropPath;
+    }
+
+    public String getHumanReadableReleaseDate() {
+
+        Calendar cal = Calendar.getInstance();
+        String[] yearMonthDay = mReleaseDate.split("-");
+
+        int year = Integer.parseInt(yearMonthDay[0]);
+        int month = Integer.parseInt(yearMonthDay[1]) - 1;
+        int day = Integer.parseInt(yearMonthDay[2]);
+
+        cal.set(year, month, day);
+        SimpleDateFormat monthDayYearFormat = new SimpleDateFormat("MMMM d, yyyy");
+
+        return monthDayYearFormat.format(cal.getTime());
     }
 }

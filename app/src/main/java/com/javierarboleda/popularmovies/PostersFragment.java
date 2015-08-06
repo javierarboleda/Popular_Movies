@@ -1,24 +1,25 @@
 package com.javierarboleda.popularmovies;
 
-import android.app.Activity;
-import android.content.Context;
-import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.GridView;
-import android.widget.ImageView;
-import android.widget.TextView;
 
 import com.javierarboleda.popularmovies.domain.Movie;
 import com.javierarboleda.popularmovies.service.MovieDbService;
-import com.javierarboleda.popularmovies.util.Constants;
-import com.squareup.picasso.Picasso;
 
-import java.util.Arrays;
+import org.json.JSONException;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.List;
 
 /**
@@ -26,8 +27,9 @@ import java.util.List;
  */
 public class PostersFragment extends Fragment{
 
-    private PostersFragmentImageAdapter postersFragmentImageAdapter;
-    // private List<Movie> movies;
+    private PostersFragmentImageAdapter mPostersFragmentImageAdapter;
+    private View mRootView;
+    private List<Movie> movies;
 
     public PostersFragment() {
     }
@@ -36,89 +38,106 @@ public class PostersFragment extends Fragment{
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        // movies = MovieDbService.getSortedPosters("popularity.desc");
+        URL url = MovieDbService.getSortedPosters("popularity.desc");
 
-        View rootView = inflater.inflate(R.layout.fragment_posters, container, false);
+        mRootView = inflater.inflate(R.layout.fragment_posters, container, false);
 
-        postersFragmentImageAdapter = new PostersFragmentImageAdapter(getActivity(), Arrays.asList(movies));
+        new FetchMovieDbData().execute(url);
 
-        GridView gridView = (GridView) rootView.findViewById(R.id.gridview_posters);
-        gridView.setAdapter(postersFragmentImageAdapter);
-
-        return rootView;
+        return mRootView;
 
     }
 
-    private Movie[] movies = {
-            new Movie("Ant-Man", "2015", null, "/7SGGUiTE6oc2fh9MjIk5M00dsQd.jpg", null),
-            new Movie("Minions", "2015", null, "/s5uMY8ooGRZOL0oe4sIvnlTsYQO.jpg", null),
-            new Movie("Jurassic World", null, "2015", "/uXZYawqUsChGSj54wcuBtEdUJbh.jpg", null),
-            new Movie("Terminator: Genisys", null, "2015", "/5JU9ytZJyR3zmClGmVm9q4Geqbd.jpg", null),
-            new Movie("Mad Max: Fury Road", null, "2015", "/kqjL17yufvn9OVLyXYpvtyrFfak.jpg", null),
-            new Movie("Insurgent", "2014", null, "/aBBQSC8ZECGn6Wh92gKDOakSC8p.jpg", null),
-    };
+//    private List<Movie> movies = {
+//            new Movie("Ant-Man", "2015", null, "/7SGGUiTE6oc2fh9MjIk5M00dsQd.jpg", null),
+//            new Movie("Minions", "2015", null, "/s5uMY8ooGRZOL0oe4sIvnlTsYQO.jpg", null),
+//            new Movie("Jurassic World", null, "2015", "/uXZYawqUsChGSj54wcuBtEdUJbh.jpg", null),
+//            new Movie("Terminator: Genisys", null, "2015", "/5JU9ytZJyR3zmClGmVm9q4Geqbd.jpg", null),
+//            new Movie("Mad Max: Fury Road", null, "2015", "/kqjL17yufvn9OVLyXYpvtyrFfak.jpg", null),
+//            new Movie("Insurgent", "2014", null, "/aBBQSC8ZECGn6Wh92gKDOakSC8p.jpg", null),
+//    };
 
-    /**
-     * Created by hype on 8/1/15.
-     *
-     * Some code taken from http://developer.android.com/guide/topics/ui/layout/gridview.html
-     *
-     * Even more code taken from https://github.com/udacity/android-custom-arrayadapter/blob/master/app/src/main/java/demo/example/com/customarrayadapter/AndroidFlavorAdapter.java
-     *   Copied some comments from above sample code for studying purposes
-     *
-     */
-    private class PostersFragmentImageAdapter extends ArrayAdapter<Movie> {
 
-        /**
-         * This is our own custom constructor (it doesn't mirror a superclass constructor).
-         * The context is used to inflate the layout file, and the List is the data we want
-         * to populate into the lists
-         *
-         * @param context       The current context. Used to inflate the layout file.
-         * @param movies  A List of Movie objects to display in a list
-         */
-        public PostersFragmentImageAdapter(Activity context, List<Movie> movies) {
-            // Here, we initialize the ArrayAdapter's internal storage for the context and the list.
-            // the second argument is used when the ArrayAdapter is populating a single TextView.
-            // Because this is a custom adapter for two TextViews and an ImageView, the adapter is not
-            // going to use this second argument, so it can be any value. Here, we used 0.
-            super(context, 0, movies);
-        }
 
-        /**
-         * Provides a view for an AdapterView
-         *
-         * @param position  The AdapterView position that is requesting a view
-         * @param convertView   The recycled view to populate. (google "android view recycling")
-         * @param parent    The parent ViewGroup that is used for inflation
-         * @return The View for the position in the AdapterView.
-         */
+
+
+
+
+
+    public class FetchMovieDbData extends AsyncTask<URL, Void, List<Movie>> {
+
+        private final String LOG_TAG = FetchMovieDbData.class.getSimpleName();
+
         @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
+        protected List<Movie> doInBackground(URL... params) {
 
-            Movie movie = getItem(position);
+            URL movieDbUrl = params[0];
 
-            Context context = getContext();
+            // These two need to be declared outside the try/catch
+            // so that they can be closed in the finally block.
+            HttpURLConnection connection = null;
+            BufferedReader reader = null;
 
-            if (convertView == null) {
-                convertView = LayoutInflater.from(context)
-                        .inflate(R.layout.grid_item_poster, parent, false);
+            // Will contain the raw JSON response as a string.
+            String responseJsonStr = null;
+
+
+            try {
+
+                // Create the request to OpenWeatherMap, and open the connection
+                connection = (HttpURLConnection) movieDbUrl.openConnection();
+                connection.setRequestMethod("GET");
+                connection.connect();
+
+                // Read the input stream into a String
+                InputStream inputStream = connection.getInputStream();
+                StringBuffer buffer = new StringBuffer();
+                if (inputStream == null) {
+                    // Nothing to do.
+                    return null;
+                }
+                reader = new BufferedReader(new InputStreamReader(inputStream));
+
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    // Since it's JSON, adding a newline isn't necessary (it won't affect parsing)
+                    // But it does make debugging a *lot* easier if you print out the completed
+                    // buffer for debugging.
+                    buffer.append(line + "\n");
+                }
+
+                if (buffer.length() == 0) {
+                    // Stream was empty.  No point in parsing.
+                    return null;
+                }
+
+                responseJsonStr = buffer.toString();
+
+                return MovieDbService.getMoviesFromJson(responseJsonStr);
+
+            } catch (IOException e) {
+                Log.e(LOG_TAG, "Error ", e);
+                // If the code didn't successfully get the weather data, there's no point in attempting
+                // to parse it.
+            } catch (JSONException e) {
+                Log.e(LOG_TAG, e.getMessage(), e);
+                e.printStackTrace();
+            } finally {
+
             }
 
-            ImageView posterView =
-                    (ImageView) convertView.findViewById(R.id.grid_item_poster_image);
-            Picasso.with(context).load(Uri.parse(MovieDbService.BASE_IMAGE_URL +
-                    Constants.SIZE_W500 + movie.getPosterPath()))
-                    .into(posterView);
-
-            TextView titleView = (TextView) convertView.findViewById(R.id.grid_item_poster_title);
-            titleView.setText(movie.getTitle());
-
-            TextView releaseYearView = (TextView) convertView.findViewById(R.id.grid_item_poster_release_year);
-            releaseYearView.setText(movie.getReleaseDate());
-
-            return convertView;
+            return null;
         }
+
+        @Override
+        protected void onPostExecute(List<Movie> movies) {
+
+            mPostersFragmentImageAdapter = new PostersFragmentImageAdapter(getActivity(), movies);
+
+            GridView gridView = (GridView) mRootView.findViewById(R.id.gridview_posters);
+            gridView.setAdapter(mPostersFragmentImageAdapter);
+        }
+
     }
 
 }
