@@ -2,16 +2,16 @@ package com.javierarboleda.popularmovies;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.PopupMenu;
-import android.widget.RadioButton;
 
 
 public class PostersActivity extends AppCompatActivity {
+
+    private Menu mMenu;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,11 +22,10 @@ public class PostersActivity extends AppCompatActivity {
                     .add(R.id.container_posters, new PostersFragment())
                     .commit();
         }
+//        setSupportActionBar((Toolbar) findViewById(R.id.main_toolbar));
 
-        setSupportActionBar((Toolbar) findViewById(R.id.main_toolbar));
-
-//        // let's remove that pesky shadow below actionbar, eh
-//        getSupportActionBar().setElevation(0);
+        // let's remove that pesky shadow below actionbar, eh
+        getSupportActionBar().setElevation(0);
     }
 
 
@@ -34,6 +33,7 @@ public class PostersActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_posters, menu);
+        mMenu = menu;
         return true;
     }
 
@@ -42,33 +42,42 @@ public class PostersActivity extends AppCompatActivity {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
 
-        if (id == R.id.sort_by_menu_item) {
-            showPopup(item);
+        switch(item.getItemId()) {
+            case R.id.sort_by_menu_item:
+                showPopup(item);
+                break;
+            case R.id.menu_item_popularity:
+                mMenu.findItem(R.id.sort_by_menu_item).setTitle(R.string.popularity);
+                break;
+            case R.id.menu_item_highest_rating:
+                mMenu.findItem(R.id.sort_by_menu_item).setTitle(R.string.highest_rated);
+                item.setChecked(true);
+                break;
         }
-
 
         return super.onOptionsItemSelected(item);
     }
 
-    public void onSortByOptionClicked(View view) {
+    public boolean sortByRadioButtonClicked(MenuItem item) {
         // Is the button now checked?
-        boolean checked = ((RadioButton) view).isChecked();
-
-        if (checked) {
-            return;
-        }
+        boolean checked = item.isChecked();
+//
+//        if (checked) {
+//            return false;
+//        }
 
         // Check which radio button was clicked
-        switch(view.getId()) {
+        switch(item.getItemId()) {
             case R.id.menu_item_popularity:
-                ((RadioButton) view).setChecked(true);
+                item.setChecked(true);
                 break;
             case R.id.menu_item_highest_rating:
-                ((RadioButton) view).setChecked(true);
+                item.setChecked(true);
                 break;
         }
+        invalidateOptionsMenu();
+        return true;
     }
 
     public void showPopup(MenuItem item) {
