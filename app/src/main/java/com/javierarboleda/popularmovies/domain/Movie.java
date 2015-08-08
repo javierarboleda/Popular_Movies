@@ -63,6 +63,10 @@ public class Movie {
 
     public String getHumanReadableReleaseDate() {
 
+        if (mReleaseDate == null || mReleaseDate.trim().isEmpty() || mReleaseDate.equals("null")) {
+            return "";
+        }
+
         Calendar cal = Calendar.getInstance();
         String[] yearMonthDay = mReleaseDate.split("-");
 

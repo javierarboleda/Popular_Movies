@@ -5,9 +5,13 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.GridView;
+import android.widget.PopupMenu;
 
 import com.javierarboleda.popularmovies.domain.Movie;
 import com.javierarboleda.popularmovies.service.MovieDbService;
@@ -25,44 +29,128 @@ import java.util.List;
 /**
  * Created by hype on 7/29/15.
  */
-public class PostersFragment extends Fragment{
+public class PostersFragment extends Fragment implements PopupMenu.OnMenuItemClickListener {
 
     private PostersFragmentImageAdapter mPostersFragmentImageAdapter;
     private View mRootView;
-    private List<Movie> movies;
+    private Menu mMenu;
+    private boolean mDescending;
+    private String mSortBy;
+    private String mSortOrder;
 
     public PostersFragment() {
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+
+        super.onCreate(savedInstanceState);
+
+        setHasOptionsMenu(true);
+        mDescending = true;
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        URL url = MovieDbService.getSortedPosters("popularity.desc");
-
         mRootView = inflater.inflate(R.layout.fragment_posters, container, false);
 
-        new FetchMovieDbData().execute(url);
+        mSortBy = "popularity";
+        mSortOrder = "desc";
+
+        populateFragmentImageAdapter(mSortBy, mSortOrder);
 
         return mRootView;
 
     }
 
-//    private List<Movie> movies = {
-//            new Movie("Ant-Man", "2015", null, "/7SGGUiTE6oc2fh9MjIk5M00dsQd.jpg", null),
-//            new Movie("Minions", "2015", null, "/s5uMY8ooGRZOL0oe4sIvnlTsYQO.jpg", null),
-//            new Movie("Jurassic World", null, "2015", "/uXZYawqUsChGSj54wcuBtEdUJbh.jpg", null),
-//            new Movie("Terminator: Genisys", null, "2015", "/5JU9ytZJyR3zmClGmVm9q4Geqbd.jpg", null),
-//            new Movie("Mad Max: Fury Road", null, "2015", "/kqjL17yufvn9OVLyXYpvtyrFfak.jpg", null),
-//            new Movie("Insurgent", "2014", null, "/aBBQSC8ZECGn6Wh92gKDOakSC8p.jpg", null),
-//    };
+    private void populateFragmentImageAdapter(String sortBy, String sortOrder) {
+
+        mSortBy = sortBy;
+        mSortOrder = sortOrder;
+
+        URL url = MovieDbService.getSortedPosters(sortBy + "." + sortOrder);
+        new FetchMovieDbData().execute(url);
+
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+
+        // Inflate the menu; this adds items to the action bar if it is present.
+        inflater.inflate(R.menu.menu_posters, menu);
+        mMenu = menu;
+
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+
+        switch(item.getItemId()) {
+            case R.id.sort_by_menu_item:
+                showPopup(item);
+                break;
+            case R.id.ascending_or_descending_menu_item:
+                toggleSortOrder();
+                break;
+        }
+
+        return super.onOptionsItemSelected(item);
+
+    }
+
+    @Override
+    public boolean onMenuItemClick(MenuItem item) {
+
+        switch(item.getItemId()) {
+            case R.id.menu_item_popularity:
+                mMenu.findItem(R.id.sort_by_menu_item).setTitle(R.string.popularity);
+                populateFragmentImageAdapter(MovieDbService.POPULARITY, mSortOrder);
+                break;
+            case R.id.menu_item_highest_rating:
+                mMenu.findItem(R.id.sort_by_menu_item).setTitle(R.string.highest_rated);
+                populateFragmentImageAdapter(MovieDbService.VOTE_AVERAGE, mSortOrder);
+                break;
+        }
+
+        return false;
+    }
+
+    private void toggleSortOrder() {
+
+        if (mDescending) {
+            mDescending = false;
+            mMenu.findItem(R.id.ascending_or_descending_menu_item).setIcon(R.drawable.ic_ascending);
+            populateFragmentImageAdapter(mSortBy, MovieDbService.ASCENDING);
+        }else {
+            mDescending = true;
+            mMenu.findItem(R.id.ascending_or_descending_menu_item)
+                    .setIcon(R.drawable.ic_descending);
+            populateFragmentImageAdapter(mSortBy, MovieDbService.DESCENDING);
+        }
+
+    }
+
+    public void showPopup(MenuItem item) {
+        final View menuItemView = getActivity().findViewById(item.getItemId());
+
+        PopupMenu popup = new PopupMenu(getActivity(), menuItemView);
 
 
+//        MenuInflater inflater = popup.getMenuInflater();
+//        Menu menu = popup.getMenu();
+//        inflater.inflate(R.menu.menu_sort_by, menu);
 
+        popup.setOnMenuItemClickListener(this);
+        popup.inflate(R.menu.menu_sort_by);
 
-
-
-
+        popup.show();
+    }
 
     public class FetchMovieDbData extends AsyncTask<URL, Void, List<Movie>> {
 
@@ -127,17 +215,18 @@ public class PostersFragment extends Fragment{
             }
 
             return null;
+
         }
 
         @Override
         protected void onPostExecute(List<Movie> movies) {
 
-            mPostersFragmentImageAdapter = new PostersFragmentImageAdapter(getActivity(), movies);
+            if (movies != null) {
+                mPostersFragmentImageAdapter = new PostersFragmentImageAdapter(getActivity(), movies);
+                GridView gridView = (GridView) mRootView.findViewById(R.id.gridview_posters);
+                gridView.setAdapter(mPostersFragmentImageAdapter);
+            }
 
-            GridView gridView = (GridView) mRootView.findViewById(R.id.gridview_posters);
-            gridView.setAdapter(mPostersFragmentImageAdapter);
         }
-
     }
-
 }
