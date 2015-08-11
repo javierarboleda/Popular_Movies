@@ -5,7 +5,10 @@
         <!-- Customize your theme here. -->
     </style>
 
-
+    <style name="ActionBarMenuItems" parent="AppTheme">
+        <item name="android:paddingLeft">32dp</item>
+        <item name="android:paddingRight">32dp</item>
+    </style>
 
 
 

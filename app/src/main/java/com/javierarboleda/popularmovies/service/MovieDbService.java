@@ -40,6 +40,7 @@ public class MovieDbService {
 
 
 
+
     private void getMovieDbJson() {
         return;
     }
@@ -86,8 +87,9 @@ public class MovieDbService {
                 String posterPath = movie.getString(POSTER_PATH);
                 String overview = movie.getString(OVERVIEW);
                 String backdropPath = movie.getString(BACKDROP_PATH);
+                String voteAverage = movie.getString(VOTE_AVERAGE);
 
-                movies.add(new Movie(title, releaseDate, overview, posterPath, backdropPath));
+                movies.add(new Movie(title, releaseDate, overview, posterPath, backdropPath, voteAverage));
             }
 
         } catch (JSONException e) {

@@ -1,5 +1,6 @@
 package com.javierarboleda.popularmovies;
 
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -10,6 +11,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.PopupMenu;
 
@@ -37,6 +39,7 @@ public class PostersFragment extends Fragment implements PopupMenu.OnMenuItemCli
     private boolean mDescending;
     private String mSortBy;
     private String mSortOrder;
+    private GridView mGridView;
 
     public PostersFragment() {
     }
@@ -48,6 +51,8 @@ public class PostersFragment extends Fragment implements PopupMenu.OnMenuItemCli
 
         setHasOptionsMenu(true);
         mDescending = true;
+
+        mGridView = (GridView) getActivity().findViewById(R.id.gridview_posters);
     }
 
     @Override
@@ -222,11 +227,42 @@ public class PostersFragment extends Fragment implements PopupMenu.OnMenuItemCli
         protected void onPostExecute(List<Movie> movies) {
 
             if (movies != null) {
+
+                if (mGridView !=  null)
+                    mGridView.smoothScrollToPosition(0);
+
                 mPostersFragmentImageAdapter = new PostersFragmentImageAdapter(getActivity(), movies);
-                GridView gridView = (GridView) mRootView.findViewById(R.id.gridview_posters);
-                gridView.setAdapter(mPostersFragmentImageAdapter);
+                mGridView = (GridView) mRootView.findViewById(R.id.gridview_posters);
+                mGridView.setAdapter(mPostersFragmentImageAdapter);
             }
 
+            mGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+                public void onItemClick(AdapterView<?> parent, View v,
+                                        int position, long id) {
+                    Movie movie = (Movie) parent.getAdapter().getItem(position);
+
+                    Intent intent = createDetailActivityIntent(movie);
+                    startActivity(intent);
+
+                }
+            });
+
         }
+    }
+
+    private Intent createDetailActivityIntent(Movie movie) {
+
+        Intent intent = new Intent(getActivity(), DetailActivity.class);
+
+        intent.putExtra(MovieDbService.VOTE_AVERAGE, movie.getVoteAverage());
+        intent.putExtra(MovieDbService.BACKDROP_PATH, movie.getBackdropPath());
+        intent.putExtra(MovieDbService.POSTER_PATH, movie.getPosterPath());
+        intent.putExtra(MovieDbService.OVERVIEW, movie.getOverview());
+        intent.putExtra(MovieDbService.RELEASE_DATE, movie.getHumanReadableReleaseDate());
+        intent.putExtra(MovieDbService.TITLE, movie.getTitle());
+
+        return intent;
+
     }
 }

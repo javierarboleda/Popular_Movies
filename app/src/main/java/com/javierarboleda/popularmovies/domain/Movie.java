@@ -13,12 +13,15 @@ public class Movie {
     private String mPosterPath;
     private String mBackdropPath;
 
-    public Movie(String mTitle, String mReleaseDate, String mOverview, String mPosterPath, String mBackdropPath) {
-        this.mTitle = mTitle;
-        this.mReleaseDate = mReleaseDate;
-        this.mOverview = mOverview;
-        this.mPosterPath = mPosterPath;
-        this.mBackdropPath = mBackdropPath;
+    private String mVoteAverage;
+
+    public Movie(String title, String releaseDate, String overview, String posterPath, String backdropPath, String voteAverage) {
+        this.mTitle =title;
+        this.mReleaseDate = releaseDate;
+        this.mOverview = overview;
+        this.mPosterPath = posterPath;
+        this.mBackdropPath = backdropPath;
+        this.mVoteAverage = voteAverage;
     }
 
     public String getTitle() {
@@ -59,6 +62,14 @@ public class Movie {
 
     public void setBackdropPath(String mBackdropPath) {
         this.mBackdropPath = mBackdropPath;
+    }
+
+    public String getVoteAverage() {
+        return mVoteAverage;
+    }
+
+    public void setVoteAverage(String mVoteAverage) {
+        this.mVoteAverage = mVoteAverage;
     }
 
     public String getHumanReadableReleaseDate() {
