@@ -1,8 +1,11 @@
 package com.javierarboleda.popularmovies;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -16,6 +19,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.PopupMenu;
+import android.widget.Toast;
 
 import com.javierarboleda.popularmovies.domain.Movie;
 import com.javierarboleda.popularmovies.util.Constants;
@@ -156,6 +160,12 @@ public class PostersFragment extends Fragment implements PopupMenu.OnMenuItemCli
 
     private void populateFragmentImageAdapter(String sortBy, String sortOrder) {
 
+        if (!isNetworkAvailable()) {
+            Toast.makeText(getActivity(), Constants.NO_NETWORK_TOAST_MESSAGE, Toast.LENGTH_SHORT)
+                .show();
+            return;
+        }
+
         mSortBy = sortBy;
         mSortOrder = sortOrder;
 
@@ -225,6 +235,22 @@ public class PostersFragment extends Fragment implements PopupMenu.OnMenuItemCli
         intent.putExtra(MovieDbUtil.TITLE, movie.getTitle());
 
         return intent;
+    }
+
+    /**
+     *
+     * Method checks for network connectivity. Code is from review example Udacity Project 1
+     * reviewer provided
+     *
+     * @return
+     */
+    private boolean isNetworkAvailable() {
+
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+
     }
 
     /**
