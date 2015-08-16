@@ -1,12 +1,15 @@
 package com.javierarboleda.popularmovies.domain;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
 /**
  * Created by hype on 8/3/15.
  */
-public class Movie {
+public class Movie implements Parcelable{
     private String mTitle;
     private String mReleaseDate;
     private String mOverview;
@@ -99,5 +102,21 @@ public class Movie {
         SimpleDateFormat monthDayYearFormat = new SimpleDateFormat("MMMM d, yyyy");
 
         return monthDayYearFormat.format(cal.getTime());
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(mTitle);
+        dest.writeString(mReleaseDate);
+        dest.writeString(mOverview);
+        dest.writeString(mPosterPath);
+        dest.writeString(mBackdropPath);
+        dest.writeString(mVoteAverage);
+        dest.writeString(mVoteCount);
     }
 }

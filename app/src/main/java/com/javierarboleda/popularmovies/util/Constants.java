@@ -19,4 +19,5 @@ public class Constants {
 
     public static final String APP_PROPERTIES = "app.properties";
     public static final String TMDB_API_KEY = "TMDB_API_KEY";
+    public static final String MOVIE_LIST = "movie_list";
 }

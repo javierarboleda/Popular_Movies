@@ -11,7 +11,6 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by Javier Arboleda on 8/3/15.
@@ -58,9 +57,9 @@ public class MovieDbUtil {
         return url;
     }
 
-    public static List<Movie> getMoviesFromJson(String moviesJsonStr) throws JSONException {
+    public static ArrayList<Movie> getMoviesFromJson(String moviesJsonStr) throws JSONException {
 
-        List<Movie> movies = new ArrayList<Movie>();
+        ArrayList<Movie> movies = new ArrayList<Movie>();
 
         try {
             JSONObject moviesJson = new JSONObject(moviesJsonStr);

@@ -71,7 +71,7 @@ public class DetailFragment extends Fragment {
         posterUrl = posterUrl.isEmpty() ? null : posterUrl;
 
         Uri backdropUri = Uri.parse(
-                MovieDbUtil.BASE_IMAGE_URL + Constants.SIZE_W342 + backdropPath);
+                MovieDbUtil.BASE_IMAGE_URL + Constants.SIZE_W780 + backdropPath);
         String backdropUrl = backdropUri.toString();
         backdropUrl = backdropUrl.isEmpty() ? null : backdropUrl;
 

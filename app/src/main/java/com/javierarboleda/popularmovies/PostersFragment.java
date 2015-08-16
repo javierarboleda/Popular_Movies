@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
@@ -48,6 +49,7 @@ public class PostersFragment extends Fragment implements PopupMenu.OnMenuItemCli
     private String mSortBy;
     private String mSortOrder;
     private GridView mGridView;
+    ArrayList<Movie> mMovies;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -84,13 +86,15 @@ public class PostersFragment extends Fragment implements PopupMenu.OnMenuItemCli
             mDescending = savedInstanceState.getBoolean(Constants.DESCENDING);
             mSortBy = savedInstanceState.getString(Constants.SORT_BY);
             mSortOrder = savedInstanceState.getString(Constants.SORT_ORDER);
+            mMovies = (ArrayList<Movie>) savedInstanceState.get(Constants.MOVIE_LIST);
+            populateImageAdapter(mMovies);
         }
         else {
             mSortBy = "popularity";
             mSortOrder = "desc";
+            populateFragmentImageAdapter(mSortBy, mSortOrder);
         }
 
-        populateFragmentImageAdapter(mSortBy, mSortOrder);
 
         return mRootView;
 
@@ -98,12 +102,12 @@ public class PostersFragment extends Fragment implements PopupMenu.OnMenuItemCli
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
 
         outState.putBoolean(Constants.DESCENDING, mDescending);
         outState.putString(Constants.SORT_BY, mSortBy);
         outState.putString(Constants.SORT_ORDER, mSortOrder);
-
-        super.onSaveInstanceState(outState);
+        outState.putParcelableArrayList(Constants.MOVIE_LIST, mMovies);
     }
 
     @Override
@@ -274,7 +278,9 @@ public class PostersFragment extends Fragment implements PopupMenu.OnMenuItemCli
 
                 responseJsonStr = buffer.toString();
 
-                return MovieDbUtil.getMoviesFromJson(responseJsonStr);
+                mMovies = MovieDbUtil.getMoviesFromJson(responseJsonStr);
+
+                return mMovies;
 
             } catch (IOException e) {
                 Log.e(LOG_TAG, "Error ", e);
