@@ -11,14 +11,14 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.javierarboleda.popularmovies.domain.Movie;
-import com.javierarboleda.popularmovies.service.MovieDbService;
+import com.javierarboleda.popularmovies.util.MovieDbUtil;
 import com.javierarboleda.popularmovies.util.Constants;
 import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
 /**
- * Created by hype on 8/1/15.
+ * Created by Javier Arboleda on 8/1/15.
  *
  * Some code taken from http://developer.android.com/guide/topics/ui/layout/gridview.html
  *
@@ -39,10 +39,6 @@ class PostersFragmentImageAdapter extends ArrayAdapter<Movie> implements View.On
      * @param movies  A List of Movie objects to display in a list
      */
     public PostersFragmentImageAdapter(Activity context, List<Movie> movies) {
-        // Here, we initialize the ArrayAdapter's internal storage for the context and the list.
-        // the second argument is used when the ArrayAdapter is populating a single TextView.
-        // Because this is a custom adapter for two TextViews and an ImageView, the adapter is not
-        // going to use this second argument, so it can be any value. Here, we used 0.
         super(context, 0, movies);
     }
 
@@ -70,7 +66,7 @@ class PostersFragmentImageAdapter extends ArrayAdapter<Movie> implements View.On
                 (ImageView) convertView.findViewById(R.id.grid_item_poster_image);
         Picasso.with(context)
                 .load(Uri.parse(
-                       MovieDbService.BASE_IMAGE_URL + Constants.SIZE_W342 + movie.getPosterPath()))
+                       MovieDbUtil.BASE_IMAGE_URL + Constants.SIZE_W342 + movie.getPosterPath()))
                 .into(posterView);
 
         TextView titleView = (TextView) convertView.findViewById(R.id.grid_item_poster_title);
@@ -78,8 +74,6 @@ class PostersFragmentImageAdapter extends ArrayAdapter<Movie> implements View.On
 
         TextView releaseYearView = (TextView) convertView.findViewById(R.id.grid_item_poster_release_year);
         releaseYearView.setText(movie.getHumanReadableReleaseDate());
-
-
 
         return convertView;
     }
