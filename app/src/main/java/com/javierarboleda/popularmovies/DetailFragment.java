@@ -65,12 +65,26 @@ public class DetailFragment extends Fragment {
         String releaseDate = intent.getStringExtra(MovieDbUtil.RELEASE_DATE);
         String title = intent.getStringExtra(MovieDbUtil.TITLE);
 
+        Uri posterUri = Uri.parse(
+                MovieDbUtil.BASE_IMAGE_URL + Constants.SIZE_W342 + posterPath);
+        String posterUrl = posterUri.toString();
+        posterUrl = posterUrl.isEmpty() ? null : posterUrl;
+
+        Uri backdropUri = Uri.parse(
+                MovieDbUtil.BASE_IMAGE_URL + Constants.SIZE_W342 + backdropPath);
+        String backdropUrl = backdropUri.toString();
+        backdropUrl = backdropUrl.isEmpty() ? null : backdropUrl;
+
         // set layout views values
         Picasso.with(getActivity())
-                .load(Uri.parse(MovieDbUtil.BASE_IMAGE_URL + Constants.SIZE_W342 + posterPath))
+                .load(posterUrl)
+                .placeholder(R.drawable.poster_placeholder_w342)
+                .error(R.drawable.poster_error_w342)
                 .into(posterImageView);
         Picasso.with(getActivity())
-                .load(Uri.parse(MovieDbUtil.BASE_IMAGE_URL + Constants.SIZE_W780 + backdropPath))
+                .load(backdropUrl)
+                .placeholder(R.drawable.backdrop_placeholder_w780)
+                .error(R.drawable.backdrop_error_w780)
                 .into(backdropImageView);
         ratingBar.setRating(Float.parseFloat(voteAverage));
         titleTextView.setText(title);

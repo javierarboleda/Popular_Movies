@@ -64,9 +64,16 @@ class PostersFragmentImageAdapter extends ArrayAdapter<Movie> implements View.On
 
         ImageView posterView =
                 (ImageView) convertView.findViewById(R.id.grid_item_poster_image);
+
+        Uri uri = Uri.parse(
+                MovieDbUtil.BASE_IMAGE_URL + Constants.SIZE_W342 + movie.getPosterPath());
+        String url = uri.toString();
+        url = url.isEmpty() ? null : url;
+
         Picasso.with(context)
-                .load(Uri.parse(
-                       MovieDbUtil.BASE_IMAGE_URL + Constants.SIZE_W342 + movie.getPosterPath()))
+                .load(url)
+                .placeholder(R.drawable.poster_placeholder_w342)
+                .error(R.drawable.poster_error_w342)
                 .into(posterView);
 
         TextView titleView = (TextView) convertView.findViewById(R.id.grid_item_poster_title);
