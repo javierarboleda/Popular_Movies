@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <ImageView
+        android:id="@+id/trailer_listview_item_image"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:scaleType="fitStart"
+        android:adjustViewBounds="true"
+        />
+    <TextView
+        android:id="@+id/trailer_listview_item_trailer_name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="2"
+        android:textColor="@color/abc_primary_text_material_dark"
+        android:gravity="center"
+        android:typeface="normal"
+        android:textSize="12sp"
+        android:ellipsize="end"
+        android:singleLine="true"/>
+
+
+</LinearLayout>

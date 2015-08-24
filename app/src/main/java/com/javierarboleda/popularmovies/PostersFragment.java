@@ -225,14 +225,8 @@ public class PostersFragment extends Fragment implements PopupMenu.OnMenuItemCli
 
         Intent intent = new Intent(getActivity(), DetailActivity.class);
 
-        intent.putExtra(MovieDbUtil.POSTER_PATH, movie.getPosterPath());
-        intent.putExtra(MovieDbUtil.VOTE_COUNT, movie.getVoteCount());
-        intent.putExtra(MovieDbUtil.VOTE_AVERAGE, movie.getVoteAverage());
-        intent.putExtra(MovieDbUtil.BACKDROP_PATH, movie.getBackdropPath());
-        intent.putExtra(MovieDbUtil.POSTER_PATH, movie.getPosterPath());
-        intent.putExtra(MovieDbUtil.OVERVIEW, movie.getOverview());
-        intent.putExtra(MovieDbUtil.RELEASE_DATE, movie.getHumanReadableReleaseDate());
-        intent.putExtra(MovieDbUtil.TITLE, movie.getTitle());
+        intent.putExtra(MovieDbUtil.MOVIE, movie);
+        intent.putExtra(MovieDbUtil.API_KEY_PARAM, mApiKey);
 
         return intent;
     }
@@ -246,8 +240,8 @@ public class PostersFragment extends Fragment implements PopupMenu.OnMenuItemCli
      */
     private boolean isNetworkAvailable() {
 
-        ConnectivityManager connectivityManager
-                = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+        ConnectivityManager connectivityManager =
+                (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
 
@@ -316,7 +310,16 @@ public class PostersFragment extends Fragment implements PopupMenu.OnMenuItemCli
                 Log.e(LOG_TAG, e.getMessage(), e);
                 e.printStackTrace();
             } finally {
-
+                if (connection != null) {
+                    connection.disconnect();
+                }
+                if (reader != null) {
+                    try {
+                        reader.close();
+                    } catch (final IOException e) {
+                        Log.e(LOG_TAG, "Error closing stream", e);
+                    }
+                }
             }
 
             return null;

@@ -32,8 +32,6 @@
                 android:scaleY="0.9"
                 android:layout_margin="5dp"/>
 
-
-
         </LinearLayout>
 
         <LinearLayout
@@ -107,6 +105,24 @@
             android:gravity="fill"
             android:typeface="normal"
             android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/trailers_heading_textview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="20dp"
+            android:textColor="#ABABAB"
+            android:gravity="fill"
+            android:typeface="monospace"
+            android:textSize="30sp"
+            android:textStyle="bold"
+            android:text="Trailers"/>
+
+        <ListView
+            android:id="@+id/trailers_listview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
 
     </LinearLayout>
 
