@@ -9,9 +9,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ImageView;
-import android.widget.ListAdapter;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RatingBar;
 import android.widget.TextView;
@@ -48,6 +47,7 @@ public class DetailFragment extends Fragment {
     private String mApiKey;
     private TrailersAdapter mTrailersAdapter;
     private ListView mTrailersListView;
+    private LinearLayout mTrailersLinearLayout;
     private ListView mReviewsListView;
     private View mRootView;
 
@@ -133,7 +133,6 @@ public class DetailFragment extends Fragment {
         new FetchMovieTrailers().execute(trailersUrl);
 
         // get and set reviews
-
         URL reviewsUrl = MovieDbUtil.getReviewsUrl(movieId, mApiKey);
         new FetchMovieReviews().execute(reviewsUrl);
 
@@ -142,19 +141,26 @@ public class DetailFragment extends Fragment {
     public void populateTrailersAdapter(List<Trailer> trailers) {
         if (trailers != null) {
             mTrailersAdapter = new TrailersAdapter(getActivity(), trailers);
-            mTrailersListView = (ListView) mRootView.findViewById(R.id.trailers_listview);
-            mTrailersListView.setAdapter(mTrailersAdapter);
-        }
+            mTrailersLinearLayout =
+                    (LinearLayout) mRootView.findViewById(R.id.trailers_linearlayout);
 
-        mTrailersListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-
-            public void onItemClick(AdapterView<?> parent, View v,
-                                    int position, long id) {
-
-                // todo: add click logic to send to youtube vid
-
+            for(int i = 0; i < mTrailersAdapter.getCount(); i++) {
+                final int position = i;
+                View view = mTrailersAdapter.getView(i, null, null);
+                view.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Trailer trailer = (Trailer) mTrailersAdapter.getItem(position);
+                        startYoutubeActivity(trailer.getYoutubeUri());
+                    }
+                });
+                mTrailersLinearLayout.addView(view);
             }
-        });
+        }
+    }
+
+    private void startYoutubeActivity(Uri youtubeUri) {
+        startActivity(new Intent(Intent.ACTION_VIEW, youtubeUri));
     }
 
     public class FetchMovieReviews extends AsyncTask<URL, Void, ArrayList<Review>> {
@@ -303,43 +309,10 @@ public class DetailFragment extends Fragment {
         protected void onPostExecute(ArrayList<Trailer> trailers) {
 
             populateTrailersAdapter(trailers);
-            setListViewHeightBasedOnChildren(mTrailersListView);
         }
     }
 
-    /**
-     * a hack that measures and sets the height of the given listview
-     *
-     * I found online that it's a no-no to put a ListView in a ScrollView, which I have done.
-     * This method allows you to get around the listview collapsing to one item.
-     *
-     * I took this helper method code from:
-     * http://nex-otaku-en.blogspot.com/2010/12/android-put-listview-in-scrollview.html
-     *
-     * I plan to find a better solution to using a listview within a scrollview if I have the time
-     *
-     * @param listView
-     */
-    public static void setListViewHeightBasedOnChildren(ListView listView) {
-        ListAdapter listAdapter = listView.getAdapter();
-        if (listAdapter == null) {
-            // pre-condition
-            return;
-        }
 
-        int totalHeight = 0;
-        int desiredWidth = View.MeasureSpec.makeMeasureSpec(listView.getWidth(), View.MeasureSpec.AT_MOST);
-        for (int i = 0; i < listAdapter.getCount(); i++) {
-            View listItem = listAdapter.getView(i, null, listView);
-            listItem.measure(desiredWidth, View.MeasureSpec.UNSPECIFIED);
-            totalHeight += listItem.getMeasuredHeight();
-        }
-
-        ViewGroup.LayoutParams params = listView.getLayoutParams();
-        params.height = totalHeight + (listView.getDividerHeight() * (listAdapter.getCount() - 1));
-        listView.setLayoutParams(params);
-        listView.requestLayout();
-    }
 
 
 }

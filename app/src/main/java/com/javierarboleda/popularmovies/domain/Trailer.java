@@ -2,9 +2,6 @@ package com.javierarboleda.popularmovies.domain;
 
 import android.net.Uri;
 
-import java.io.IOException;
-import java.net.URL;
-
 /**
  * Created by Javier Arboleda on 8/21/15.
  */
@@ -48,18 +45,11 @@ public class Trailer {
 
     }
 
-    public URL getYoutubeUrl() {
+    public Uri getYoutubeUri() {
 
-        Uri builtUri = Uri.parse(VIDEO_BASE_URL).buildUpon()
+        return Uri.parse(VIDEO_BASE_URL).buildUpon()
                 .appendQueryParameter(V, mKey)
                 .build();
-        URL url = null;
-        try {
-            url = new URL(builtUri.toString());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return url;
 
     }
 
