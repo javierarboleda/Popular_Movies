@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * Created by Javier Arboleda on 8/23/15.
  */
-public class TrailersAdapter extends ArrayAdapter<Trailer> implements View.OnClickListener {
+public class TrailersAdapter extends ArrayAdapter<Trailer> {
 
     public TrailersAdapter(Activity context, List<Trailer> trailers) {
         super(context, 0, trailers);
@@ -33,7 +33,7 @@ public class TrailersAdapter extends ArrayAdapter<Trailer> implements View.OnCli
 
         if (convertView == null) {
             convertView = LayoutInflater.from(context)
-                    .inflate(R.layout.trailer_listview_item, parent, false);
+                    .inflate(R.layout.trailer_layout_item, parent, false);
         }
 
         ImageView posterView =
@@ -55,11 +55,5 @@ public class TrailersAdapter extends ArrayAdapter<Trailer> implements View.OnCli
         titleView.setText(trailer.getName());
 
         return convertView;
-    }
-
-
-    @Override
-    public void onClick(View v) {
-
     }
 }

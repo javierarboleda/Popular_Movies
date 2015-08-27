@@ -126,6 +126,26 @@
             android:layout_margin="5dp"
             android:orientation="vertical"/>
 
+        <TextView
+            android:id="@+id/reviews_heading_textview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="20dp"
+            android:textColor="#ABABAB"
+            android:gravity="fill"
+            android:typeface="monospace"
+            android:textSize="30sp"
+            android:textStyle="bold"
+            android:text="Reviews"/>
+
+        <LinearLayout
+            android:id="@+id/reviews_linearlayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:orientation="vertical"/>
+
     </LinearLayout>
 
 </ScrollView>

@@ -11,8 +11,8 @@
         android:layout_margin="5dp"
         android:layout_weight="1"
         android:scaleType="fitStart"
-        android:adjustViewBounds="true"
-        />
+        android:adjustViewBounds="true" />
+
     <TextView
         android:id="@+id/trailer_listview_item_trailer_name"
         android:layout_width="0dp"
@@ -27,6 +27,5 @@
         android:textStyle="bold"
         android:ellipsize="end"
         android:singleLine="true"/>
-
 
 </LinearLayout>

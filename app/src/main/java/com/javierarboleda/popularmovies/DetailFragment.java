@@ -46,8 +46,10 @@ public class DetailFragment extends Fragment {
     private Intent mIntent;
     private String mApiKey;
     private TrailersAdapter mTrailersAdapter;
+    private ReviewsAdapter mReviewsAdapter;
     private ListView mTrailersListView;
     private LinearLayout mTrailersLinearLayout;
+    private LinearLayout mReviewsLinearLayout;
     private ListView mReviewsListView;
     private View mRootView;
 
@@ -159,6 +161,20 @@ public class DetailFragment extends Fragment {
         }
     }
 
+    private void populateReviewsAdapter(ArrayList<Review> reviews) {
+        if (reviews != null) {
+            mReviewsAdapter = new ReviewsAdapter(getActivity(), reviews);
+            mReviewsLinearLayout = (LinearLayout) mRootView.findViewById(R.id.reviews_linearlayout);
+
+            for(int i = 0; i < mReviewsAdapter.getCount(); i++) {
+                final int position = i;
+                View view = mReviewsAdapter.getView(i, null, null);
+                mReviewsLinearLayout.addView(view);
+            }
+
+        }
+    }
+
     private void startYoutubeActivity(Uri youtubeUri) {
         startActivity(new Intent(Intent.ACTION_VIEW, youtubeUri));
     }
@@ -233,7 +249,8 @@ public class DetailFragment extends Fragment {
 
         @Override
         protected void onPostExecute(ArrayList<Review> reviews) {
-            super.onPostExecute(reviews);
+
+            populateReviewsAdapter(reviews);
         }
     }
 
@@ -311,8 +328,4 @@ public class DetailFragment extends Fragment {
             populateTrailersAdapter(trailers);
         }
     }
-
-
-
-
 }
