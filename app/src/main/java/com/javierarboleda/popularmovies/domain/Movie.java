@@ -19,6 +19,8 @@ public class Movie implements Parcelable {
     private String mVoteCount;
     private int mMovieId;
 
+    private boolean mFavorite;
+
     public Movie(String title, String releaseDate, String overview, String posterPath,
                  String backdropPath, String voteAverage, String voteCount, int movieId) {
 
@@ -30,6 +32,22 @@ public class Movie implements Parcelable {
         this.mVoteAverage = voteAverage;
         this.mVoteCount = voteCount;
         this.mMovieId = movieId;
+
+    }
+
+    public Movie(String title, String releaseDate, String overview, String posterPath,
+                 String backdropPath, String voteAverage, String voteCount, int movieId
+                 , boolean favorite) {
+
+        this.mTitle =title;
+        this.mReleaseDate = releaseDate;
+        this.mOverview = overview;
+        this.mPosterPath = posterPath;
+        this.mBackdropPath = backdropPath;
+        this.mVoteAverage = voteAverage;
+        this.mVoteCount = voteCount;
+        this.mMovieId = movieId;
+        this.mFavorite = favorite;
 
     }
 
@@ -152,5 +170,13 @@ public class Movie implements Parcelable {
 
     public void setMovieId(int mMovieId) {
         this.mMovieId = mMovieId;
+    }
+
+    public boolean isFavorite() {
+        return mFavorite;
+    }
+
+    public void setFavorite(boolean mFavorite) {
+        this.mFavorite = mFavorite;
     }
 }

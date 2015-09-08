@@ -2,6 +2,7 @@ package com.javierarboleda.popularmovies.util;
 
 import android.net.Uri;
 
+import com.javierarboleda.popularmovies.data.MovieContract;
 import com.javierarboleda.popularmovies.domain.Movie;
 import com.javierarboleda.popularmovies.domain.Review;
 import com.javierarboleda.popularmovies.domain.Trailer;
@@ -51,6 +52,7 @@ public class MovieDbUtil {
     public static final String CONTENT = "content";
     public static final String TYPE = "type";
     public static final String TRAILER = "Trailer";
+    public static final String FAVORITE_MOVIES = "favorite_movies";
 
     public static URL getApiUrl(String sortBy, String apiKey) {
 
@@ -69,6 +71,10 @@ public class MovieDbUtil {
         }
 
         return url;
+    }
+
+    public static Uri getMovieQueryUrl() {
+            return MovieContract.MovieEntry.CONTENT_URI;
     }
 
     public static URL getReviewsUrl(int movieId, String apiKey) {

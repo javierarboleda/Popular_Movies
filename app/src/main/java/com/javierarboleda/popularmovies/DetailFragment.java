@@ -1,20 +1,30 @@
 package com.javierarboleda.popularmovies;
 
+import android.content.ContentValues;
+import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.Intent;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.RatingBar;
 import android.widget.TextView;
 
+import com.javierarboleda.popularmovies.data.MovieContract;
 import com.javierarboleda.popularmovies.domain.Movie;
 import com.javierarboleda.popularmovies.domain.Review;
 import com.javierarboleda.popularmovies.domain.Trailer;
@@ -25,13 +35,16 @@ import com.squareup.picasso.Picasso;
 import org.json.JSONException;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by Javier Arboleda on 8/10/15.
@@ -47,18 +60,23 @@ public class DetailFragment extends Fragment {
     private String mApiKey;
     private TrailersAdapter mTrailersAdapter;
     private ReviewsAdapter mReviewsAdapter;
-    private ListView mTrailersListView;
     private LinearLayout mTrailersLinearLayout;
     private LinearLayout mReviewsLinearLayout;
-    private ListView mReviewsListView;
+    private Movie mMovie;
     private View mRootView;
+    private Menu mMenu;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        setHasOptionsMenu(true);
+
         mIntent = getActivity().getIntent();
         mApiKey = mIntent.getStringExtra(MovieDbUtil.API_KEY_PARAM);
+        mMovie = mIntent.getParcelableExtra(MovieDbUtil.MOVIE);
+
+        checkIfIsFavorite();
 
     }
 
@@ -72,6 +90,157 @@ public class DetailFragment extends Fragment {
 
         return mRootView;
 
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_details, menu);
+
+        mMenu = menu;
+
+        if (mMovie.isFavorite()) {
+            setAsFavoriteIcon();
+        }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        switch(item.getItemId()) {
+            case R.id.favorite_item:
+                if (!mMovie.isFavorite())
+                    toggleFavorite();
+                break;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void addFavoriteToDb(Movie movie) {
+        ContentValues movieValues = new ContentValues();
+        movieValues.put(MovieContract.MovieEntry.COLUMN_MOVIE_ID, movie.getMovieId());
+        movieValues.put(MovieContract.MovieEntry.COLUMN_TITLE, movie.getTitle());
+        movieValues.put(MovieContract.MovieEntry.COLUMN_RELEASE_DATE, movie.getReleaseDate());
+        movieValues.put(MovieContract.MovieEntry.COLUMN_OVERVIEW, movie.getOverview());
+        movieValues.put(MovieContract.MovieEntry.COLUMN_POSTER_PATH, movie.getPosterPath());
+        movieValues.put(MovieContract.MovieEntry.COLUMN_BACKGROUND_PATH, movie.getBackdropPath());
+        movieValues.put(MovieContract.MovieEntry.COLUMN_VOTE_AVERAGE, movie.getVoteAverage());
+        movieValues.put(MovieContract.MovieEntry.COLUMN_VOTE_COUNT, movie.getVoteCount());
+        movieValues.put(MovieContract.MovieEntry.COLUMN_FAVORITE, "true");
+
+        getActivity().getContentResolver()
+                .insert(MovieContract.MovieEntry.CONTENT_URI, movieValues);
+
+        ContentValues trailerValues = new ContentValues();
+        String fileName = "";
+
+        for (int i = 0; i < mTrailers.size(); i++) {
+            trailerValues.put(MovieContract.TrailerEntry.COLUMN_MOVIE_ID, movie.getMovieId());
+            trailerValues.put(MovieContract.TrailerEntry.COLUMN_KEY, mTrailers.get(i).getKey());
+            trailerValues.put(MovieContract.TrailerEntry.COLUMN_NAME, mTrailers.get(i).getName());
+
+            getActivity().getContentResolver()
+                    .insert(MovieContract.TrailerEntry.CONTENT_URI, trailerValues);
+
+            // save trailer thumbnail to internal memory
+            // example to save imageView image to directory from:
+            // http://stackoverflow.com/questions/17674634/
+            // saving-and-reading-bitmaps-images-from-internal-memory-in-android
+            fileName = mTrailers.get(i).getKey() + ".jpg";
+
+            ImageView view = (ImageView) mTrailersAdapter
+                    .getView(i, null, null).findViewById(R.id.trailer_listview_item_image);
+
+            // saving images
+            view.buildDrawingCache();
+            BitmapDrawable bitmapDrawable = (BitmapDrawable) view.getDrawable();
+            Bitmap bitmap = bitmapDrawable.getBitmap();
+
+            ContextWrapper cw = new ContextWrapper(getActivity().getApplicationContext());
+            // path to /data/data/yourapp/app_data/imageDir
+            File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
+            // Create imageDir
+            File mypath = new File(directory, fileName);
+
+            FileOutputStream fos = null;
+            try {
+
+                fos = new FileOutputStream(mypath);
+
+                // Use the compress method on the BitMap object to write image to the OutputStream
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
+                fos.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            try {
+                File f = new File(directory, fileName);
+                Bitmap b = BitmapFactory.decodeStream(new FileInputStream(f));
+                System.out.print(b.toString());
+            }
+            catch (FileNotFoundException e)
+            {
+                e.printStackTrace();
+            }
+
+        }
+
+//        // example to save imageView image to directory from:
+//        // http://stackoverflow.com/questions/17674634/
+//        // saving-and-reading-bitmaps-images-from-internal-memory-in-android
+//        if (mTrailersAdapter != null) {
+//            for(int i = 0; i < mTrailersAdapter.getCount(); i++) {
+//                final int position = i;
+//                ImageView view = (ImageView) mTrailersAdapter
+//                        .getView(i, null, null).findViewById(R.id.trailer_listview_item_image);
+//
+//                // saving images
+//                view.buildDrawingCache();
+//                BitmapDrawable bitmapDrawable = (BitmapDrawable) view.getDrawable();
+//                Bitmap bitmap = bitmapDrawable.getBitmap();
+//
+//                ContextWrapper cw = new ContextWrapper(getActivity().getApplicationContext());
+//                // path to /data/data/yourapp/app_data/imageDir
+//                File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
+//                // Create imageDir
+//                File mypath=new File(directory,"profile.jpg");
+//
+//                FileOutputStream fos = null;
+//                try {
+//
+//                    fos = new FileOutputStream(mypath);
+//
+//                    // Use the compress method on the BitMap object to write image to the OutputStream
+//                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
+//                    fos.close();
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//
+//                try {
+//                    File f=new File(directory, "profile.jpg");
+//                    Bitmap b = BitmapFactory.decodeStream(new FileInputStream(f));
+//                    System.out.print(b.toString());
+//                }
+//                catch (FileNotFoundException e)
+//                {
+//                    e.printStackTrace();
+//                }
+//
+//
+//            }
+//        }
+
+        ContentValues reviewValues = new ContentValues();
+        for (Review review : mReviews) {
+            reviewValues.put(MovieContract.ReviewEntry.COLUMN_MOVIE_ID, movie.getMovieId());
+            reviewValues.put(MovieContract.ReviewEntry.COLUMN_AUTHOR, review.getAuthor());
+            reviewValues.put(MovieContract.ReviewEntry.COLUMN_CONTENT, review.getContent());
+
+            getActivity().getContentResolver()
+                    .insert(MovieContract.ReviewEntry.CONTENT_URI, reviewValues);
+        }
     }
 
     /**
@@ -93,15 +262,14 @@ public class DetailFragment extends Fragment {
         TextView overviewTextView = (TextView) rootView.findViewById(R.id.overview_textview);
 
         // get values passed through intent and set to local variables
-        Movie movie = mIntent.getParcelableExtra(MovieDbUtil.MOVIE);
-        String posterPath = movie.getPosterPath();
-        String voteCount = movie.getVoteCount();
-        String voteAverage = movie.getVoteAverage();
-        String backdropPath = movie.getBackdropPath();
-        String overview = movie.getOverview();
-        String releaseDate = movie.getHumanReadableReleaseDate();
-        String title = movie.getTitle();
-        int movieId = movie.getMovieId();
+        String posterPath = mMovie.getPosterPath();
+        String voteCount = mMovie.getVoteCount();
+        String voteAverage = mMovie.getVoteAverage();
+        String backdropPath = mMovie.getBackdropPath();
+        String overview = mMovie.getOverview();
+        String releaseDate = mMovie.getHumanReadableReleaseDate();
+        String title = mMovie.getTitle();
+        int movieId = mMovie.getMovieId();
 
         Uri posterUri = Uri.parse(
                 MovieDbUtil.BASE_IMAGE_URL + Constants.SIZE_W342 + posterPath);
@@ -140,9 +308,8 @@ public class DetailFragment extends Fragment {
 
     }
 
-    public void populateTrailersAdapter(List<Trailer> trailers) {
-        if (trailers != null) {
-            mTrailersAdapter = new TrailersAdapter(getActivity(), trailers);
+    public void populateTrailersAdapter() {
+        if (mTrailersAdapter != null) {
             mTrailersLinearLayout =
                     (LinearLayout) mRootView.findViewById(R.id.trailers_linearlayout);
 
@@ -161,9 +328,8 @@ public class DetailFragment extends Fragment {
         }
     }
 
-    private void populateReviewsAdapter(ArrayList<Review> reviews) {
-        if (reviews != null) {
-            mReviewsAdapter = new ReviewsAdapter(getActivity(), reviews);
+    private void populateReviewsAdapter() {
+        if (mReviewsAdapter != null) {
             mReviewsLinearLayout = (LinearLayout) mRootView.findViewById(R.id.reviews_linearlayout);
 
             for(int i = 0; i < mReviewsAdapter.getCount(); i++) {
@@ -173,10 +339,6 @@ public class DetailFragment extends Fragment {
             }
 
         }
-    }
-
-    private void startYoutubeActivity(Uri youtubeUri) {
-        startActivity(new Intent(Intent.ACTION_VIEW, youtubeUri));
     }
 
     public class FetchMovieReviews extends AsyncTask<URL, Void, ArrayList<Review>> {
@@ -221,7 +383,7 @@ public class DetailFragment extends Fragment {
                 responseJsonStr = buffer.toString();
 
                 mReviews = MovieDbUtil.getReviewsFromJson(responseJsonStr);
-
+                mReviewsAdapter = new ReviewsAdapter(getActivity(), mReviews);
                 return mReviews;
 
             } catch (IOException e) {
@@ -250,7 +412,7 @@ public class DetailFragment extends Fragment {
         @Override
         protected void onPostExecute(ArrayList<Review> reviews) {
 
-            populateReviewsAdapter(reviews);
+            populateReviewsAdapter();
         }
     }
 
@@ -296,7 +458,8 @@ public class DetailFragment extends Fragment {
                 responseJsonStr = buffer.toString();
 
                 mTrailers = MovieDbUtil.getTrailersFromJson(responseJsonStr);
-
+                mTrailersAdapter = new TrailersAdapter(getActivity(), mTrailers,
+                        mMovie.isFavorite());
                 return mTrailers;
 
             } catch (IOException e) {
@@ -325,7 +488,35 @@ public class DetailFragment extends Fragment {
         @Override
         protected void onPostExecute(ArrayList<Trailer> trailers) {
 
-            populateTrailersAdapter(trailers);
+            populateTrailersAdapter();
+        }
+    }
+
+    private void toggleFavorite() {
+        addFavoriteToDb(mMovie);
+        mMovie.setFavorite(true);
+        setAsFavoriteIcon();
+    }
+
+    private void setAsFavoriteIcon() {
+        mMenu.findItem(R.id.favorite_item).setIcon(R.drawable.ic_action_content_heart_circle);
+        mMovie.setFavorite(true);
+    }
+
+    private void startYoutubeActivity(Uri youtubeUri) {
+        startActivity(new Intent(Intent.ACTION_VIEW, youtubeUri));
+    }
+
+    private void checkIfIsFavorite() {
+        Cursor c =
+                getActivity().getContentResolver().query(
+                        MovieContract.MovieEntry.CONTENT_URI,
+                        null,
+                        MovieContract.MovieEntry.COLUMN_MOVIE_ID + " = ?",
+                        new String[]{String.valueOf(mMovie.getMovieId())},
+                        null);
+        if (c.getCount() > 0){
+            mMovie.setFavorite(true);
         }
     }
 }

@@ -2,6 +2,7 @@ package com.javierarboleda.popularmovies;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,6 +14,7 @@ import android.widget.TextView;
 import com.javierarboleda.popularmovies.domain.Trailer;
 import com.squareup.picasso.Picasso;
 
+import java.io.File;
 import java.util.List;
 
 /**
@@ -20,8 +22,15 @@ import java.util.List;
  */
 public class TrailersAdapter extends ArrayAdapter<Trailer> {
 
+    boolean mFavorite;
+
     public TrailersAdapter(Activity context, List<Trailer> trailers) {
         super(context, 0, trailers);
+    }
+
+    public TrailersAdapter(Activity context, List<Trailer> trailers, boolean favorite) {
+        this(context, trailers);
+        mFavorite = favorite;
     }
 
     @Override
@@ -39,16 +48,34 @@ public class TrailersAdapter extends ArrayAdapter<Trailer> {
         ImageView posterView =
                 (ImageView) convertView.findViewById(R.id.trailer_listview_item_image);
 
-        Uri uri = trailer.getThumbnailUrl();
-        String url = uri.toString();
-        url = url.isEmpty() ? null : url;
+        // if this is a favorite movie, then load image from internal memory
+        if (mFavorite) {
 
-        Picasso.with(context)
-                .load(url)
-                        // todo: create and add placeholder and error images for thumbnail
+            String fileName = trailer.getKey() + ".jpg";
+            ContextWrapper cw = new ContextWrapper(getContext());
+            // path to /data/data/yourapp/app_data/imageDir
+            File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
+            // Create imageDir
+            File file = new File(directory, fileName);
+
+            Picasso.with(context)
+                    .load(file)
+                            // todo: create and add placeholder and error images for thumbnail
 //                .placeholder(R.drawable.poster_placeholder_w342)
 //                .error(R.drawable.poster_error_w342)
-                .into(posterView);
+                    .into(posterView);
+        } else {
+            Uri uri = trailer.getThumbnailUrl();
+            String url = uri.toString();
+            url = url.isEmpty() ? null : url;
+
+            Picasso.with(context)
+                    .load(url)
+                            // todo: create and add placeholder and error images for thumbnail
+//                .placeholder(R.drawable.poster_placeholder_w342)
+//                .error(R.drawable.poster_error_w342)
+                    .into(posterView);
+        }
 
         TextView titleView = (TextView)
                 convertView.findViewById(R.id.trailer_listview_item_trailer_name);
