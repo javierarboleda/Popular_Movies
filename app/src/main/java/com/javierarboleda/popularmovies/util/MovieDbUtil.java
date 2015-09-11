@@ -53,6 +53,9 @@ public class MovieDbUtil {
     public static final String TYPE = "type";
     public static final String TRAILER = "Trailer";
     public static final String FAVORITE_MOVIES = "favorite_movies";
+    public static final String IS_TWO_PANE = "is_two_pane";
+    public static final String IS_FAVORITE = "is_favorite";
+    public static final String IS_FAVORITE_VISIBLE = "is_favorite_visible";
 
     public static URL getApiUrl(String sortBy, String apiKey) {
 

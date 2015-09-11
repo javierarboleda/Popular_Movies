@@ -13,4 +13,11 @@
         android:title="@string/ascending_or_descending"
         app:showAsAction="ifRoom" />
 
+    <item
+        android:id="@+id/favorite_item"
+        android:icon="@drawable/ic_action_content_add_circle"
+        android:title="@string/add_to_favorites"
+        app:showAsAction="ifRoom"
+        android:visible="false"/>
+
 </menu>

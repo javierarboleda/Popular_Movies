@@ -70,19 +70,30 @@ public class DetailFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setHasOptionsMenu(true);
-
         mIntent = getActivity().getIntent();
         mApiKey = mIntent.getStringExtra(MovieDbUtil.API_KEY_PARAM);
         mMovie = mIntent.getParcelableExtra(MovieDbUtil.MOVIE);
 
-        checkIfIsFavorite();
+        if(mMovie == null)
+            return;
 
+        setHasOptionsMenu(true);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
+        Bundle args = getArguments();
+        if (args != null) {
+            mMovie = args.getParcelable(MovieDbUtil.MOVIE);
+            mApiKey = args.getString(MovieDbUtil.API_KEY_PARAM);
+        }
+
+        if(mMovie == null)
+            return null;
+
+        checkIfIsFavorite();
 
         mRootView = inflater.inflate(R.layout.fragment_details, container, false);
 
@@ -94,8 +105,8 @@ public class DetailFragment extends Fragment {
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.menu_details, menu);
 
+        inflater.inflate(R.menu.menu_details, menu);
         mMenu = menu;
 
         if (mMovie.isFavorite()) {
@@ -116,23 +127,36 @@ public class DetailFragment extends Fragment {
         return super.onOptionsItemSelected(item);
     }
 
+    /**
+     * When a movie is added to favorites, this method will add movie, trailer, and review
+     * details to the database using ContentProvider
+     */
     private void addFavoriteToDb(Movie movie) {
-        ContentValues movieValues = new ContentValues();
-        movieValues.put(MovieContract.MovieEntry.COLUMN_MOVIE_ID, movie.getMovieId());
-        movieValues.put(MovieContract.MovieEntry.COLUMN_TITLE, movie.getTitle());
-        movieValues.put(MovieContract.MovieEntry.COLUMN_RELEASE_DATE, movie.getReleaseDate());
-        movieValues.put(MovieContract.MovieEntry.COLUMN_OVERVIEW, movie.getOverview());
-        movieValues.put(MovieContract.MovieEntry.COLUMN_POSTER_PATH, movie.getPosterPath());
-        movieValues.put(MovieContract.MovieEntry.COLUMN_BACKGROUND_PATH, movie.getBackdropPath());
-        movieValues.put(MovieContract.MovieEntry.COLUMN_VOTE_AVERAGE, movie.getVoteAverage());
-        movieValues.put(MovieContract.MovieEntry.COLUMN_VOTE_COUNT, movie.getVoteCount());
-        movieValues.put(MovieContract.MovieEntry.COLUMN_FAVORITE, "true");
 
-        getActivity().getContentResolver()
-                .insert(MovieContract.MovieEntry.CONTENT_URI, movieValues);
+        insertMovieIntoDb(movie);
+
+        insertTrailersIntoDb(movie);
+
+        insertReviewsIntoDb(movie);
+    }
+
+    private void insertReviewsIntoDb(Movie movie) {
+        ContentValues reviewValues = new ContentValues();
+        for (Review review : mReviews) {
+            reviewValues.put(MovieContract.ReviewEntry.COLUMN_MOVIE_ID, movie.getMovieId());
+            reviewValues.put(MovieContract.ReviewEntry.COLUMN_AUTHOR, review.getAuthor());
+            reviewValues.put(MovieContract.ReviewEntry.COLUMN_CONTENT, review.getContent());
+
+            getActivity().getContentResolver()
+                    .insert(MovieContract.ReviewEntry.CONTENT_URI, reviewValues);
+        }
+    }
+
+    private void insertTrailersIntoDb(Movie movie) {
 
         ContentValues trailerValues = new ContentValues();
-        String fileName = "";
+
+        String fileName;
 
         for (int i = 0; i < mTrailers.size(); i++) {
             trailerValues.put(MovieContract.TrailerEntry.COLUMN_MOVIE_ID, movie.getMovieId());
@@ -160,12 +184,12 @@ public class DetailFragment extends Fragment {
             // path to /data/data/yourapp/app_data/imageDir
             File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
             // Create imageDir
-            File mypath = new File(directory, fileName);
+            File myPath = new File(directory, fileName);
 
-            FileOutputStream fos = null;
+            FileOutputStream fos;
             try {
 
-                fos = new FileOutputStream(mypath);
+                fos = new FileOutputStream(myPath);
 
                 // Use the compress method on the BitMap object to write image to the OutputStream
                 bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
@@ -178,75 +202,32 @@ public class DetailFragment extends Fragment {
                 File f = new File(directory, fileName);
                 Bitmap b = BitmapFactory.decodeStream(new FileInputStream(f));
                 System.out.print(b.toString());
-            }
-            catch (FileNotFoundException e)
-            {
+            } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
 
         }
+    }
 
-//        // example to save imageView image to directory from:
-//        // http://stackoverflow.com/questions/17674634/
-//        // saving-and-reading-bitmaps-images-from-internal-memory-in-android
-//        if (mTrailersAdapter != null) {
-//            for(int i = 0; i < mTrailersAdapter.getCount(); i++) {
-//                final int position = i;
-//                ImageView view = (ImageView) mTrailersAdapter
-//                        .getView(i, null, null).findViewById(R.id.trailer_listview_item_image);
-//
-//                // saving images
-//                view.buildDrawingCache();
-//                BitmapDrawable bitmapDrawable = (BitmapDrawable) view.getDrawable();
-//                Bitmap bitmap = bitmapDrawable.getBitmap();
-//
-//                ContextWrapper cw = new ContextWrapper(getActivity().getApplicationContext());
-//                // path to /data/data/yourapp/app_data/imageDir
-//                File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
-//                // Create imageDir
-//                File mypath=new File(directory,"profile.jpg");
-//
-//                FileOutputStream fos = null;
-//                try {
-//
-//                    fos = new FileOutputStream(mypath);
-//
-//                    // Use the compress method on the BitMap object to write image to the OutputStream
-//                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
-//                    fos.close();
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                }
-//
-//                try {
-//                    File f=new File(directory, "profile.jpg");
-//                    Bitmap b = BitmapFactory.decodeStream(new FileInputStream(f));
-//                    System.out.print(b.toString());
-//                }
-//                catch (FileNotFoundException e)
-//                {
-//                    e.printStackTrace();
-//                }
-//
-//
-//            }
-//        }
+    private void insertMovieIntoDb(Movie movie) {
 
-        ContentValues reviewValues = new ContentValues();
-        for (Review review : mReviews) {
-            reviewValues.put(MovieContract.ReviewEntry.COLUMN_MOVIE_ID, movie.getMovieId());
-            reviewValues.put(MovieContract.ReviewEntry.COLUMN_AUTHOR, review.getAuthor());
-            reviewValues.put(MovieContract.ReviewEntry.COLUMN_CONTENT, review.getContent());
+        ContentValues movieValues = new ContentValues();
+        movieValues.put(MovieContract.MovieEntry.COLUMN_MOVIE_ID, movie.getMovieId());
+        movieValues.put(MovieContract.MovieEntry.COLUMN_TITLE, movie.getTitle());
+        movieValues.put(MovieContract.MovieEntry.COLUMN_RELEASE_DATE, movie.getReleaseDate());
+        movieValues.put(MovieContract.MovieEntry.COLUMN_OVERVIEW, movie.getOverview());
+        movieValues.put(MovieContract.MovieEntry.COLUMN_POSTER_PATH, movie.getPosterPath());
+        movieValues.put(MovieContract.MovieEntry.COLUMN_BACKGROUND_PATH, movie.getBackdropPath());
+        movieValues.put(MovieContract.MovieEntry.COLUMN_VOTE_AVERAGE, movie.getVoteAverage());
+        movieValues.put(MovieContract.MovieEntry.COLUMN_VOTE_COUNT, movie.getVoteCount());
+        movieValues.put(MovieContract.MovieEntry.COLUMN_FAVORITE, "true");
 
-            getActivity().getContentResolver()
-                    .insert(MovieContract.ReviewEntry.CONTENT_URI, reviewValues);
-        }
+        getActivity().getContentResolver()
+                .insert(MovieContract.MovieEntry.CONTENT_URI, movieValues);
     }
 
     /**
      * Takes all the values passed through intent and populates the layout views
-     *
-     * @param rootView
      */
     private void injectFragmentViews(View rootView) {
 
@@ -411,11 +392,9 @@ public class DetailFragment extends Fragment {
 
         @Override
         protected void onPostExecute(ArrayList<Review> reviews) {
-
             populateReviewsAdapter();
         }
     }
-
 
     public class FetchMovieTrailers extends AsyncTask<URL, Void, ArrayList<Trailer>> {
         private final String LOG_TAG = FetchMovieReviews.class.getSimpleName();
@@ -487,7 +466,6 @@ public class DetailFragment extends Fragment {
 
         @Override
         protected void onPostExecute(ArrayList<Trailer> trailers) {
-
             populateTrailersAdapter();
         }
     }
@@ -496,6 +474,14 @@ public class DetailFragment extends Fragment {
         addFavoriteToDb(mMovie);
         mMovie.setFavorite(true);
         setAsFavoriteIcon();
+    }
+
+    /**
+     * Used for setting favorite when using master/detail tablet layout
+     */
+    public void toggleFavoriteTwoPane() {
+        addFavoriteToDb(mMovie);
+        mMovie.setFavorite(true);
     }
 
     private void setAsFavoriteIcon() {
@@ -507,6 +493,10 @@ public class DetailFragment extends Fragment {
         startActivity(new Intent(Intent.ACTION_VIEW, youtubeUri));
     }
 
+    /**
+     * Checks the local database to determine if this movie exists as a favorite, if so, will set
+     * member movie object favorite attribute to true
+     */
     private void checkIfIsFavorite() {
         Cursor c =
                 getActivity().getContentResolver().query(
@@ -518,5 +508,9 @@ public class DetailFragment extends Fragment {
         if (c.getCount() > 0){
             mMovie.setFavorite(true);
         }
+    }
+
+    public boolean isFavorite() {
+        return mMovie.isFavorite();
     }
 }

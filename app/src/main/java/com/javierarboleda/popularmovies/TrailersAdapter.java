@@ -60,9 +60,6 @@ public class TrailersAdapter extends ArrayAdapter<Trailer> {
 
             Picasso.with(context)
                     .load(file)
-                            // todo: create and add placeholder and error images for thumbnail
-//                .placeholder(R.drawable.poster_placeholder_w342)
-//                .error(R.drawable.poster_error_w342)
                     .into(posterView);
         } else {
             Uri uri = trailer.getThumbnailUrl();
@@ -71,9 +68,6 @@ public class TrailersAdapter extends ArrayAdapter<Trailer> {
 
             Picasso.with(context)
                     .load(url)
-                            // todo: create and add placeholder and error images for thumbnail
-//                .placeholder(R.drawable.poster_placeholder_w342)
-//                .error(R.drawable.poster_error_w342)
                     .into(posterView);
         }
 
