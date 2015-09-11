@@ -28,8 +28,6 @@ import java.util.List;
  */
 class PostersFragmentImageAdapter extends ArrayAdapter<Movie> implements View.OnClickListener {
 
-
-
     /**
      * This is our own custom constructor (it doesn't mirror a superclass constructor).
      * The context is used to inflate the layout file, and the List is the data we want

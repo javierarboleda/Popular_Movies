@@ -31,6 +31,9 @@
 
         </activity>
 
+        <provider
+            android:authorities="com.javierarboleda.popularmovies"
+            android:name=".data.MovieProvider" />
 
     </application>
 

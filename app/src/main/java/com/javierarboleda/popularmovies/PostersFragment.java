@@ -1,11 +1,12 @@
 package com.javierarboleda.popularmovies;
 
 import android.content.Context;
-import android.content.Intent;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
+import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -21,6 +22,7 @@ import android.widget.GridView;
 import android.widget.PopupMenu;
 import android.widget.Toast;
 
+import com.javierarboleda.popularmovies.data.MovieContract;
 import com.javierarboleda.popularmovies.domain.Movie;
 import com.javierarboleda.popularmovies.util.Constants;
 import com.javierarboleda.popularmovies.util.MovieDbUtil;
@@ -55,6 +57,23 @@ public class PostersFragment extends Fragment implements PopupMenu.OnMenuItemCli
     private GridView mGridView;
     ArrayList<Movie> mMovies;
 
+    // Below fields super necessary for handling master/detail tablet layout
+    private boolean mTwoPane;
+    private boolean mFavorite;
+    private boolean mFavoriteVisible;
+
+    /**
+     * A callback interface that all activities containing this fragment must
+     * implement. This mechanism allows activities to be notified of item
+     * selections.
+     */
+    public interface Callback {
+        /**
+         * Callback for when an item has been selected from posters GridView.
+         */
+        boolean onItemSelected(Movie movie, String apiKey);
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
 
@@ -65,19 +84,7 @@ public class PostersFragment extends Fragment implements PopupMenu.OnMenuItemCli
 
         mGridView = (GridView) getActivity().findViewById(R.id.gridview_posters);
 
-        // help with loading a property comes from :
-        // >> http://myossdevblog.blogspot.com/2010/02/reading-properties-files-on-android.html
-        Resources resources = this.getResources();
-        AssetManager assetManager = resources.getAssets();
-
-        try {
-            InputStream inputStream = assetManager.open(Constants.APP_PROPERTIES);
-            Properties properties = new Properties();
-            properties.load(inputStream);
-            mApiKey = properties.getProperty(Constants.TMDB_API_KEY);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        setApiKeyFromProperties();
     }
 
     @Override
@@ -91,7 +98,10 @@ public class PostersFragment extends Fragment implements PopupMenu.OnMenuItemCli
             mSortBy = savedInstanceState.getString(Constants.SORT_BY);
             mSortOrder = savedInstanceState.getString(Constants.SORT_ORDER);
             mMovies = (ArrayList<Movie>) savedInstanceState.get(Constants.MOVIE_LIST);
-            populateImageAdapter(mMovies);
+            mTwoPane = savedInstanceState.getBoolean(MovieDbUtil.IS_TWO_PANE);
+            mFavorite = savedInstanceState.getBoolean(MovieDbUtil.IS_FAVORITE);
+            mFavoriteVisible = savedInstanceState.getBoolean(MovieDbUtil.IS_FAVORITE_VISIBLE);
+            setImageAdapter(mMovies);
         }
         else {
             mSortBy = "popularity";
@@ -99,9 +109,7 @@ public class PostersFragment extends Fragment implements PopupMenu.OnMenuItemCli
             populateFragmentImageAdapter(mSortBy, mSortOrder);
         }
 
-
         return mRootView;
-
     }
 
     @Override
@@ -112,6 +120,9 @@ public class PostersFragment extends Fragment implements PopupMenu.OnMenuItemCli
         outState.putString(Constants.SORT_BY, mSortBy);
         outState.putString(Constants.SORT_ORDER, mSortOrder);
         outState.putParcelableArrayList(Constants.MOVIE_LIST, mMovies);
+        outState.putBoolean(MovieDbUtil.IS_TWO_PANE, mTwoPane);
+        outState.putBoolean(MovieDbUtil.IS_FAVORITE, mFavorite);
+        outState.putBoolean(MovieDbUtil.IS_FAVORITE_VISIBLE, mFavoriteVisible);
     }
 
     @Override
@@ -124,6 +135,17 @@ public class PostersFragment extends Fragment implements PopupMenu.OnMenuItemCli
             mMenu.findItem(R.id.ascending_or_descending_menu_item)
                     .setIcon(R.drawable.ic_ascending);
         }
+        // Below is necessary for setting correct favorite icon on screen rotate
+        if (mFavoriteVisible) {
+            mMenu.findItem(R.id.favorite_item).setVisible(true);
+            if (mTwoPane && mFavorite) {
+                mMenu.findItem(R.id.favorite_item)
+                        .setIcon(R.drawable.ic_action_content_heart_circle);
+            } else {
+                mMenu.findItem(R.id.favorite_item)
+                        .setIcon(R.drawable.ic_action_content_add_circle);
+            }
+        }
     }
 
     @Override
@@ -135,6 +157,9 @@ public class PostersFragment extends Fragment implements PopupMenu.OnMenuItemCli
                 break;
             case R.id.ascending_or_descending_menu_item:
                 toggleSortOrder();
+                break;
+            case R.id.favorite_item:
+                favoriteMenuItemClicked();
                 break;
         }
 
@@ -153,11 +178,21 @@ public class PostersFragment extends Fragment implements PopupMenu.OnMenuItemCli
                 mMenu.findItem(R.id.sort_by_menu_item).setTitle(R.string.highest_rated);
                 populateFragmentImageAdapter(MovieDbUtil.VOTE_AVERAGE, mSortOrder);
                 break;
+            case R.id.menu_item_favorite_movies:
+                mMenu.findItem(R.id.sort_by_menu_item).setTitle(R.string.favorite_movies);
+                populateFragmentImageAdapter(MovieDbUtil.FAVORITE_MOVIES, mSortOrder);
+                break;
+
         }
 
         return false;
     }
 
+    /**
+     * Calls AsyncTask for populating FragmentImageAdapter. Will make a call to either
+     * FetchMoviesFromMovieDb for fetching movies from local database, or FetchMovieDbData for
+     * fetching movies from TheMovieDB
+     */
     private void populateFragmentImageAdapter(String sortBy, String sortOrder) {
 
         if (!isNetworkAvailable()) {
@@ -169,11 +204,19 @@ public class PostersFragment extends Fragment implements PopupMenu.OnMenuItemCli
         mSortBy = sortBy;
         mSortOrder = sortOrder;
 
-        URL url = MovieDbUtil.getApiUrl(sortBy + "." + sortOrder, mApiKey);
-        new FetchMovieDbData().execute(url);
+        if (mSortBy.equalsIgnoreCase(MovieDbUtil.FAVORITE_MOVIES)) {
+            new FetchMoviesFromMovieDb().execute(MovieDbUtil.getMovieQueryUrl());
+        } else {
+            URL url = MovieDbUtil.getApiUrl(sortBy + "." + sortOrder, mApiKey);
+            new FetchMovieDbData().execute(url);
+        }
+
 
     }
 
+    /**
+     * Function for toggling ascending/descending sort order.
+     */
     private void toggleSortOrder() {
 
         if (mDescending) {
@@ -189,6 +232,9 @@ public class PostersFragment extends Fragment implements PopupMenu.OnMenuItemCli
 
     }
 
+    /**
+     * Function for showing popup menu that contains sort by menu items.
+     */
     public void showPopup(MenuItem item) {
         final View menuItemView = getActivity().findViewById(item.getItemId());
 
@@ -200,7 +246,10 @@ public class PostersFragment extends Fragment implements PopupMenu.OnMenuItemCli
         popup.show();
     }
 
-    public void populateImageAdapter(List<Movie> movies) {
+    /**
+     * Function for instantiating the PostersFragmentImageAdapter and setting onItemClickListener.
+     */
+    public void setImageAdapter(List<Movie> movies) {
 
         if (movies != null) {
             mPostersFragmentImageAdapter = new PostersFragmentImageAdapter(getActivity(), movies);
@@ -212,29 +261,46 @@ public class PostersFragment extends Fragment implements PopupMenu.OnMenuItemCli
 
             public void onItemClick(AdapterView<?> parent, View v,
                                     int position, long id) {
+
                 Movie movie = (Movie) parent.getAdapter().getItem(position);
 
-                Intent intent = createDetailActivityIntent(movie);
-                startActivity(intent);
+                mTwoPane = ((Callback) getActivity()).onItemSelected(movie, mApiKey);
+
+                if (mTwoPane) {
+
+                    mMenu.findItem(R.id.favorite_item).setVisible(true);
+                    mFavoriteVisible = true;
+
+                    if (isMovieFavorite(movie)) {
+                        mMenu.findItem(R.id.favorite_item)
+                                .setIcon(R.drawable.ic_action_content_heart_circle);
+                        mFavorite = true;
+                    } else {
+                        mMenu.findItem(R.id.favorite_item)
+                                .setIcon(R.drawable.ic_action_content_add_circle);
+                        mFavorite = false;
+                    }
+
+                }
 
             }
         });
     }
 
-    private Intent createDetailActivityIntent(Movie movie) {
+    /**
+     * Called when favorite menu icon is clicked. This is necessary for master/detail tablet
+     * layout. If movie is added to favorites from this layout, this fragment will call
+     * DetailFragment object's add to favortie logic
+     */
+    public void favoriteMenuItemClicked() {
+        DetailFragment df = (DetailFragment) getActivity().getSupportFragmentManager()
+                .findFragmentByTag(PostersActivity.DETAIL_FRAGMENT_TAG);
 
-        Intent intent = new Intent(getActivity(), DetailActivity.class);
-
-        intent.putExtra(MovieDbUtil.POSTER_PATH, movie.getPosterPath());
-        intent.putExtra(MovieDbUtil.VOTE_COUNT, movie.getVoteCount());
-        intent.putExtra(MovieDbUtil.VOTE_AVERAGE, movie.getVoteAverage());
-        intent.putExtra(MovieDbUtil.BACKDROP_PATH, movie.getBackdropPath());
-        intent.putExtra(MovieDbUtil.POSTER_PATH, movie.getPosterPath());
-        intent.putExtra(MovieDbUtil.OVERVIEW, movie.getOverview());
-        intent.putExtra(MovieDbUtil.RELEASE_DATE, movie.getHumanReadableReleaseDate());
-        intent.putExtra(MovieDbUtil.TITLE, movie.getTitle());
-
-        return intent;
+        if (df != null && !df.isFavorite()) {
+            df.toggleFavoriteTwoPane();
+            mMenu.findItem(R.id.favorite_item).setIcon(R.drawable.ic_action_content_heart_circle);
+            mFavorite = true;
+        }
     }
 
     /**
@@ -246,11 +312,44 @@ public class PostersFragment extends Fragment implements PopupMenu.OnMenuItemCli
      */
     private boolean isNetworkAvailable() {
 
-        ConnectivityManager connectivityManager
-                = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+        ConnectivityManager connectivityManager =
+                (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
 
+    }
+
+    private boolean isMovieFavorite(Movie movie) {
+        Cursor c =
+                getActivity().getContentResolver().query(
+                        MovieContract.MovieEntry.CONTENT_URI,
+                        null,
+                        MovieContract.MovieEntry.COLUMN_MOVIE_ID + " = ?",
+                        new String[]{String.valueOf(movie.getMovieId())},
+                        null);
+        if (c.getCount() > 0){
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Sets TheMovieDB API key from properties file
+     */
+    private void setApiKeyFromProperties() {
+        // help with loading a property comes from :
+        // >> http://myossdevblog.blogspot.com/2010/02/reading-properties-files-on-android.html
+        Resources resources = this.getResources();
+        AssetManager assetManager = resources.getAssets();
+
+        try {
+            InputStream inputStream = assetManager.open(Constants.APP_PROPERTIES);
+            Properties properties = new Properties();
+            properties.load(inputStream);
+            mApiKey = properties.getProperty(Constants.TMDB_API_KEY);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -316,7 +415,16 @@ public class PostersFragment extends Fragment implements PopupMenu.OnMenuItemCli
                 Log.e(LOG_TAG, e.getMessage(), e);
                 e.printStackTrace();
             } finally {
-
+                if (connection != null) {
+                    connection.disconnect();
+                }
+                if (reader != null) {
+                    try {
+                        reader.close();
+                    } catch (final IOException e) {
+                        Log.e(LOG_TAG, "Error closing stream", e);
+                    }
+                }
             }
 
             return null;
@@ -324,8 +432,55 @@ public class PostersFragment extends Fragment implements PopupMenu.OnMenuItemCli
 
         @Override
         protected void onPostExecute(List<Movie> movies) {
+            setImageAdapter(movies);
+        }
+    }
 
-            populateImageAdapter(movies);
+    /**
+     *
+     * AsyncTask class that fetches movie data from SQLite Movie database
+     *
+     * Some code used from Udacity Sunshine App
+     *
+     */
+    public class FetchMoviesFromMovieDb extends AsyncTask<Uri, Void, List<Movie>> {
+
+        @Override
+        protected List<Movie> doInBackground(Uri... params) {
+
+            Uri uri = params[0];
+
+            Cursor c =
+                    getActivity().getContentResolver().query(uri,
+                            null,
+                            null,
+                            null,
+                            null);
+
+            ArrayList<Movie> movies = new ArrayList<Movie>();
+
+            while (c.moveToNext()) {
+                String title = c.getString(c.getColumnIndex(MovieContract.MovieEntry.COLUMN_TITLE));
+                String releaseDate = c.getString(c.getColumnIndex(MovieContract.MovieEntry.COLUMN_RELEASE_DATE));
+                String overview = c.getString(c.getColumnIndex(MovieContract.MovieEntry.COLUMN_OVERVIEW));
+                String posterPath = c.getString(c.getColumnIndex(MovieContract.MovieEntry.COLUMN_POSTER_PATH));
+                String backgroundPath = c.getString(c.getColumnIndex(MovieContract.MovieEntry.COLUMN_BACKGROUND_PATH));
+                String voteAverage = c.getString(c.getColumnIndex(MovieContract.MovieEntry.COLUMN_VOTE_AVERAGE));
+                String voteCount = c.getString(c.getColumnIndex(MovieContract.MovieEntry.COLUMN_VOTE_COUNT));
+                String movieId = c.getString(c.getColumnIndex(MovieContract.MovieEntry.COLUMN_MOVIE_ID));
+                String favorite = c.getString(c.getColumnIndex(MovieContract.MovieEntry.COLUMN_FAVORITE));
+
+                movies.add(new Movie(title, releaseDate, overview, posterPath, backgroundPath,
+                        voteAverage, voteCount, Integer.valueOf(movieId),
+                        Boolean.valueOf(favorite)));
+            }
+
+            return mMovies = movies;
+        }
+
+        @Override
+        protected void onPostExecute(List<Movie> movies) {
+            setImageAdapter(movies);
         }
     }
 }

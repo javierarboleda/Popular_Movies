@@ -7,9 +7,9 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
 /**
- * Created by hype on 8/3/15.
+ * Created by Javier Arboleda on 8/3/15.
  */
-public class Movie implements Parcelable{
+public class Movie implements Parcelable {
     private String mTitle;
     private String mReleaseDate;
     private String mOverview;
@@ -17,9 +17,12 @@ public class Movie implements Parcelable{
     private String mBackdropPath;
     private String mVoteAverage;
     private String mVoteCount;
+    private int mMovieId;
+
+    private boolean mFavorite;
 
     public Movie(String title, String releaseDate, String overview, String posterPath,
-                 String backdropPath, String voteAverage, String voteCount) {
+                 String backdropPath, String voteAverage, String voteCount, int movieId) {
 
         this.mTitle =title;
         this.mReleaseDate = releaseDate;
@@ -28,7 +31,64 @@ public class Movie implements Parcelable{
         this.mBackdropPath = backdropPath;
         this.mVoteAverage = voteAverage;
         this.mVoteCount = voteCount;
+        this.mMovieId = movieId;
 
+    }
+
+    public Movie(String title, String releaseDate, String overview, String posterPath,
+                 String backdropPath, String voteAverage, String voteCount, int movieId
+                 , boolean favorite) {
+
+        this.mTitle =title;
+        this.mReleaseDate = releaseDate;
+        this.mOverview = overview;
+        this.mPosterPath = posterPath;
+        this.mBackdropPath = backdropPath;
+        this.mVoteAverage = voteAverage;
+        this.mVoteCount = voteCount;
+        this.mMovieId = movieId;
+        this.mFavorite = favorite;
+
+    }
+
+    public Movie(Parcel in) {
+        mTitle = in.readString();
+        mReleaseDate = in.readString();
+        mOverview = in.readString();
+        mPosterPath = in.readString();
+        mBackdropPath = in.readString();
+        mVoteAverage = in.readString();
+        mVoteCount = in.readString();
+        mMovieId = in.readInt();
+    }
+
+    public static final Parcelable.Creator<Movie> CREATOR = new Creator<Movie>() {
+        @Override
+        public Movie createFromParcel(Parcel in) {
+            return new Movie(in);
+        }
+
+        @Override
+        public Movie[] newArray(int size) {
+            return new Movie[size];
+        }
+    };
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(mTitle);
+        dest.writeString(mReleaseDate);
+        dest.writeString(mOverview);
+        dest.writeString(mPosterPath);
+        dest.writeString(mBackdropPath);
+        dest.writeString(mVoteAverage);
+        dest.writeString(mVoteCount);
+        dest.writeInt(mMovieId);
     }
 
     public String getTitle() {
@@ -104,19 +164,19 @@ public class Movie implements Parcelable{
         return monthDayYearFormat.format(cal.getTime());
     }
 
-    @Override
-    public int describeContents() {
-        return 0;
+    public int getMovieId() {
+        return mMovieId;
     }
 
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(mTitle);
-        dest.writeString(mReleaseDate);
-        dest.writeString(mOverview);
-        dest.writeString(mPosterPath);
-        dest.writeString(mBackdropPath);
-        dest.writeString(mVoteAverage);
-        dest.writeString(mVoteCount);
+    public void setMovieId(int mMovieId) {
+        this.mMovieId = mMovieId;
+    }
+
+    public boolean isFavorite() {
+        return mFavorite;
+    }
+
+    public void setFavorite(boolean mFavorite) {
+        this.mFavorite = mFavorite;
     }
 }
