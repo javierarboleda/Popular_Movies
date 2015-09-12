@@ -201,6 +201,12 @@ public class PostersFragment extends Fragment implements PopupMenu.OnMenuItemCli
             return;
         }
 
+        if (mApiKey == null || mApiKey.trim().isEmpty()) {
+            Toast.makeText(getActivity(), Constants.API_KEY_EMPTY, Toast.LENGTH_LONG)
+                    .show();
+            return;
+        }
+
         mSortBy = sortBy;
         mSortOrder = sortOrder;
 
@@ -251,10 +257,20 @@ public class PostersFragment extends Fragment implements PopupMenu.OnMenuItemCli
      */
     public void setImageAdapter(List<Movie> movies) {
 
+
         if (movies != null) {
             mPostersFragmentImageAdapter = new PostersFragmentImageAdapter(getActivity(), movies);
             mGridView = (GridView) mRootView.findViewById(R.id.gridview_posters);
             mGridView.setAdapter(mPostersFragmentImageAdapter);
+        }
+        // This function is called from asyncTask which fetched movies from API call to TheMovieDB.
+        // If movies is null, then there was an error with connecting to the API. This could be
+        // because of an incorrect or bad API key.
+        else {
+            Toast.makeText(getActivity(), Constants.MOVIE_DB_CONNECTION_ERROR_TOAST,
+                    Toast.LENGTH_LONG)
+                    .show();
+            return;
         }
 
         mGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -426,7 +442,6 @@ public class PostersFragment extends Fragment implements PopupMenu.OnMenuItemCli
                     }
                 }
             }
-
             return null;
         }
 

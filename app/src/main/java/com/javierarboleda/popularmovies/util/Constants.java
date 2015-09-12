@@ -21,4 +21,8 @@ public class Constants {
     public static final String TMDB_API_KEY = "TMDB_API_KEY";
     public static final String MOVIE_LIST = "movie_list";
     public static final String NO_NETWORK_TOAST_MESSAGE = "No network connectivity detected!";
+    public static final String API_KEY_EMPTY = "API Key was not detected. Did you add it to " +
+            "the app.properties file?";
+    public static final String MOVIE_DB_CONNECTION_ERROR_TOAST = "There was an error connecting " +
+            "to TheMovieDB API. Are you sure you entered the correct key into app.properties file?";
 }
